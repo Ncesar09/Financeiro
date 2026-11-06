@@ -1,11 +1,10 @@
-// Service worker: guarda os arquivos no aparelho para o app abrir sem internet.
-// Sempre que mudar algum arquivo do app, aumente o número da versão abaixo.
-const CACHE = 'fismo-v1';
-const ARQUIVOS = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'financeiro-v1';
+const ARQUIVOS = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)));
-  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -16,7 +15,16 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Internet primeiro (pega versões novas); se estiver offline, usa o cache
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
+        const copia = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copia));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
+  );
 });
