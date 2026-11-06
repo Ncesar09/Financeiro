@@ -324,4 +324,31 @@ mostrarTela('lancar');
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => { /* sem modo offline, o app segue funcionando */ });
+  /* ===== Botão de instalar ===== */
+let promptInstalar = null;
+const jaInstalado = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+
+// Android (Chrome): mostra o botão quando o app puder ser instalado
+window.addEventListener('beforeinstallprompt', (ev) => {
+  ev.preventDefault();
+  promptInstalar = ev;
+  if (!jaInstalado) $('instalar').hidden = false;
+});
+
+$('instalar').addEventListener('click', async () => {
+  if (!promptInstalar) return;
+  promptInstalar.prompt();
+  await promptInstalar.userChoice;
+  promptInstalar = null;
+  $('instalar').hidden = true;
+});
+
+window.addEventListener('appinstalled', () => { $('instalar').hidden = true; });
+
+// iPhone: não existe botão automático, então mostra a instrução
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !jaInstalado) {
+  const ajuda = $('ajuda-instalar');
+  ajuda.textContent = 'Para instalar: toque em Compartilhar e depois em Adicionar à Tela de Início.';
+  ajuda.hidden = false;
+}
 }
