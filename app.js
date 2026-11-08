@@ -264,14 +264,28 @@ function renderAjustes() {
 }
 
 function exportar() {
-  const blob = new Blob([JSON.stringify(estado, null, 2)], { type: 'application/json' });
+function baixar(arquivo) {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'backup-financeiro-' + dataHoje() + '.json';
+  a.href = URL.createObjectURL(arquivo);
+  a.download = arquivo.name;
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function exportar() {
+  const enxuto = {
+    saldoInicial: estado.saldoInicial,
+    lancamentos: estado.lancamentos.map(({ data, desc, tipo, valor }) => ({ data, desc, tipo, valor }))
+  };
+  const arquivo = new File([JSON.stringify(enxuto)], 'backup-financeiro-' + dataHoje() + '.json', { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+    navigator.share({ files: [arquivo], title: 'Backup financeiro' }).catch(() => {});
+  } else {
+    baixar(arquivo);
+  }
+}
 }
 
 function importar(arquivo) {
