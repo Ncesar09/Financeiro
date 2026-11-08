@@ -272,6 +272,21 @@ function baixar(arquivo) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  function exportarCSV() {
+  const linhas = ['Data;Tipo;Descrição;Valor'];
+  [...estado.lancamentos]
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .forEach((l) => {
+      linhas.push([
+        l.data.split('-').reverse().join('/'),
+        l.tipo === 'in' ? 'Entrada' : 'Despesa',
+        '"' + l.desc.replace(/"/g, '""') + '"',
+        (l.valor / 100).toFixed(2).replace('.', ',')
+      ].join(';'));
+    });
+  baixar(new File(['\uFEFF' + linhas.join('\r\n')], 'lancamentos-' + dataHoje() + '.csv', { type: 'text/csv' }));
+}
+$('exportar-csv').addEventListener('click', exportarCSV);
 }
 
 function exportar() {
